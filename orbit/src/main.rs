@@ -79,3 +79,7 @@ fn accumulate_forces(a: &Object, b: &Vec<Object>) -> Object {
         force: f
     }
 }
+
+fn calculate_forces_on_all(a :: &Vec<Object>) -> Vec<Object> {
+  a.into_iter().map(| o | -> { o }).collect()
+}
