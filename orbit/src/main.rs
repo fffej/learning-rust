@@ -130,10 +130,19 @@ fn collide_all(a: &Vec<Object>) -> Vec<Object> {
 fn update_all(a: &Vec<Object>) -> Vec<Object> {
 
     let r:Vec<Object> = Vec::new();
+    let collidedPairs:Vec<Object> = Vec::new()
 
     for src in a.iter() {
         for tgt in a.iter() {
+            if src == tgt {
+                continue;
+            }
 
+            // This makes me vomit
+            if collide(src,tgt) && !collidedPairs.contains((tgt,src)) {
+                    collidedPairs.push((src,tgt));
+                }
+            }
         }
     }
 
