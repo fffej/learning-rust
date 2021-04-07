@@ -92,3 +92,50 @@ fn reposition(a: &Object) -> Object {
         force: Vec2(a.force.0, a.force.1)
     }
 }
+
+fn reposition_all(a: &Vec<Object>) -> Vec<Object> {
+    a.iter().map(|o| reposition(o)).collect()
+}
+
+
+fn collide(a: &Object, b: &Object) -> bool {
+    distance (&a.position, &b.position) <= 3.0
+}
+
+fn merge(a: &Object, b: &Object) -> Object {
+    let mx = a.mass;
+    let my = b.mass;
+    let mergedMass = mx + my;
+    let s = mx / mergedMass;
+    let p1 = &a.position;
+    let p2 = &b.position;
+    let uv = unit(&sub(&p2,&p1));
+    let d = scale(&uv,s);
+    let mv1 = scale(&a.velocity, mx);
+    let mv2 = scale(&b.velocity, my);
+
+    Object {
+        position: add(&p1,&d),
+        mass: mergedMass,
+        velocity: scale(&add(&mv1,&mv2), 1.0/mergedMass),
+        force: add(&a.force, &b.force)
+    }
+
+}
+
+fn collide_all(a: &Vec<Object>) -> Vec<Object> {
+    Vec::new()
+}
+
+fn update_all(a: &Vec<Object>) -> Vec<Object> {
+
+    let r:Vec<Object> = Vec::new();
+
+    for src in a.iter() {
+        for tgt in a.iter() {
+
+        }
+    }
+
+    r
+}
