@@ -86,9 +86,9 @@ fn calculate_forces_on_all(a : &Vec<Object>) -> Vec<Object> {
 
 fn reposition(a: &Object) -> Object {
     Object {
-        position: add(a.position, a.velocity),
-        mass:, o.mass,
-        velocity: Vec2(o.velocity.0, o.velocity.1),
-        force: o.force
+        position: add(&a.position, &a.velocity),
+        mass: a.mass,
+        velocity: Vec2(a.velocity.0, a.velocity.1),
+        force: Vec2(a.force.0, a.force.1)
     }
 }
