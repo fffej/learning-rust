@@ -1,3 +1,8 @@
+struct Args {
+    objectCount: i32;
+    delta: i32;
+}
+
 fn main() {
     println!("Hello, world!");
 }
