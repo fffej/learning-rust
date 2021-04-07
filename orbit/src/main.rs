@@ -83,3 +83,12 @@ fn accumulate_forces(a: &Object, b: &Vec<Object>) -> Object {
 fn calculate_forces_on_all(a : &Vec<Object>) -> Vec<Object> {
   a.iter().map(|o| accumulate_forces(o,a)).collect()
 }
+
+fn reposition(a: &Object) -> Object {
+    Object {
+        position: add(a.position, a.velocity),
+        mass:, o.mass,
+        velocity: Vec2(o.velocity.0, o.velocity.1),
+        force: o.force
+    }
+}
