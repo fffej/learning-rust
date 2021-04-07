@@ -2,7 +2,9 @@ fn main() {
     println!("Hello, world!");
 }
 
+#[derive(Debug, PartialEq, Copy, Clone)]
 struct Vec2 (f32,f32);
+
 type Position = Vec2;
 type Velocity = Vec2;
 type Force = Vec2;
@@ -47,6 +49,7 @@ fn rotate90(a: &Vec2) -> Vec2 {
     Vec2(-a.1,a.0)
 }
 
+#[derive(Debug, PartialEq, Copy, Clone)]
 struct Object {
     position: Position,
     mass: f32,
@@ -130,21 +133,43 @@ fn collide_all(a: &Vec<Object>) -> Vec<Object> {
 fn update_all(a: &Vec<Object>) -> Vec<Object> {
 
     let r:Vec<Object> = Vec::new();
-    let collidedPairs:Vec<Object> = Vec::new()
+    let mut collidedPairs:Vec<(&Object,&Object)> = Vec::new();
+    let mut inert:Vec<Object> = Vec::new();
 
+    // Find all the pairs that have collided
     for src in a.iter() {
         for tgt in a.iter() {
             if src == tgt {
                 continue;
             }
 
-            // This makes me vomit
-            if collide(src,tgt) && !collidedPairs.contains((tgt,src)) {
-                    collidedPairs.push((src,tgt));
-                }
+            let t = (src,tgt);
+
+            // This makes me vomit  
+            if collide(src,tgt) && !collidedPairs.contains( &(tgt,src) ){
+                    collidedPairs.push( (src,tgt) );
             }
         }
     }
 
-    r
+    // Find all the objects not involved in collisions
+    for obj in a.iter() {
+        let mut found = false;
+        for (src,tgt) in collidedPairs.iter() {
+            if obj == *src || obj == *tgt {
+                found = true;
+                break;
+            }
+        }
+
+        if !found {
+            inert.push(*obj);
+        }
+    }   
+
+    // Merge together the collided pairs
+    let mut merged : Vec<Object> = collidedPairs.iter().map(| x | merge(x.0,x.1)).collect();
+    inert.append(&mut merged);
+
+    inert
 }
