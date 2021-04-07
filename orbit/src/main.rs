@@ -68,14 +68,14 @@ fn force_between(a: &Object, b: &Object) -> Force {
     scale(&uv,g)
 }
 
-fn accumulate_forces(a: &Object, b: Vec<Object>) -> Object {
+fn accumulate_forces(a: &Object, b: &Vec<Object>) -> Object {
     let f = b.iter().fold(Vec2(0.0,0.0), | acc, x | {
         add(&acc,&force_between(x, a))
     });
     Object{
-        position: a.position,
+        position: Vec2(a.position.0, a.position.1),
         mass: a.mass,
-        velocity: a.velocity,
+        velocity: Vec2(a.velocity.0, a.velocity.1),
         force: f
     }
 }
