@@ -1,11 +1,46 @@
-struct Args {
-    objectCount: i32;
-    delta: i32;
-}
+// TODO
+// Learn what idiomatic Rust looks like!
+// - Get rid of Copy/Clone traits
+// - Use mutation confidentally!
+// - Replace vomit inducing pairs gubbins near the bottom
+// - Improve type safety of Vec2
+
+use text_colorizer::*;
+use std::env;
 
 fn main() {
-    println!("Hello, world!");
+    let args = parse_args();
 }
+
+#[derive(Debug)]
+struct Arguments {
+    num_objects: i32,
+    delta: i32,
+    output: String
+}
+
+fn print_usage() {
+   eprintln!("{} - simulate some bodies under gravity", "orbit".green());
+   eprintln!("Usage: orbit <num_objects> <delta>  <output>");
+}
+
+fn parse_args() -> Arguments {
+    
+    let args: Vec<String> = env::args().skip(1).collect();
+
+    if args.len() != 3 {
+        print_usage();
+        eprintln!("{} wrong number of arguments:@ expected 3, got {}.", "Error:".red().bold(), args.len());
+        std::process::exit(1);
+    }
+
+    Arguments {
+        num_objects: args[0].parse().unwrap(),
+        delta: args[1].parse().unwrap(),
+        output: args[2].clone()
+    }
+}
+
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 struct Vec2 (f32,f32);
@@ -113,8 +148,8 @@ fn collide(a: &Object, b: &Object) -> bool {
 fn merge(a: &Object, b: &Object) -> Object {
     let mx = a.mass;
     let my = b.mass;
-    let mergedMass = mx + my;
-    let s = mx / mergedMass;
+    let merged_mass = mx + my;
+    let s = mx / merged_mass;
     let p1 = &a.position;
     let p2 = &b.position;
     let uv = unit(&sub(&p2,&p1));
@@ -124,8 +159,8 @@ fn merge(a: &Object, b: &Object) -> Object {
 
     Object {
         position: add(&p1,&d),
-        mass: mergedMass,
-        velocity: scale(&add(&mv1,&mv2), 1.0/mergedMass),
+        mass: merged_mass,
+        velocity: scale(&add(&mv1,&mv2), 1.0/merged_mass),
         force: add(&a.force, &b.force)
     }
 
@@ -138,7 +173,7 @@ fn collide_all(a: &Vec<Object>) -> Vec<Object> {
 fn update_all(a: &Vec<Object>) -> Vec<Object> {
 
     let r:Vec<Object> = Vec::new();
-    let mut collidedPairs:Vec<(&Object,&Object)> = Vec::new();
+    let mut collided_pairs:Vec<(&Object,&Object)> = Vec::new();
     let mut inert:Vec<Object> = Vec::new();
 
     // Find all the pairs that have collided
@@ -151,8 +186,8 @@ fn update_all(a: &Vec<Object>) -> Vec<Object> {
             let t = (src,tgt);
 
             // This makes me vomit  
-            if collide(src,tgt) && !collidedPairs.contains( &(tgt,src) ){
-                    collidedPairs.push( (src,tgt) );
+            if collide(src,tgt) && !collided_pairs.contains( &(tgt,src) ){
+                    collided_pairs.push( (src,tgt) );
             }
         }
     }
@@ -160,7 +195,7 @@ fn update_all(a: &Vec<Object>) -> Vec<Object> {
     // Find all the objects not involved in collisions
     for obj in a.iter() {
         let mut found = false;
-        for (src,tgt) in collidedPairs.iter() {
+        for (src,tgt) in collided_pairs.iter() {
             if obj == *src || obj == *tgt {
                 found = true;
                 break;
@@ -173,7 +208,7 @@ fn update_all(a: &Vec<Object>) -> Vec<Object> {
     }   
 
     // Merge together the collided pairs
-    let mut merged : Vec<Object> = collidedPairs.iter().map(| x | merge(x.0,x.1)).collect();
+    let mut merged : Vec<Object> = collided_pairs.iter().map(| x | merge(x.0,x.1)).collect();
     inert.append(&mut merged);
 
     inert
