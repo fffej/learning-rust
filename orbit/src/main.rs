@@ -4,13 +4,55 @@
 // - Use mutation confidentally!
 // - Replace vomit inducing pairs gubbins near the bottom
 // - Improve type safety of Vec2
+// - Use Pi!
 
 use text_colorizer::*;
 use std::env;
+use rand::thread_rng;
+use rand::Rng;
+
+extern crate rand;
 
 fn main() {
     let args = parse_args();
-}
+    let mut rng = thread_rng();
+    let objects : Vec<Object> = Vec::new();
+    let sun = Object {
+        position: Vec2(0.0,0.0),
+        mass: 30.0,
+        velocity: Vec2(0.0,0.0),
+        force: Vec2(0.0,0.0)
+    };
+
+    for n in 0 .. args.num_objects {
+        let x : (f32,f32,f32,f32) = rand::random();
+
+    }
+ }
+
+ fn random_position(x: f32, y: f32, sun_position: Vec2) -> Vec2 {
+     let r = x * 150.0 + 80.0;
+     let theta = y * 2.0 * 3.14; // use PI!
+
+     add(&sun_position, &Vec2(r * theta.cos(), r * theta.sin()))
+ }
+
+ fn random_velocity(r: f32, pos: Vec2, sun: Object) -> Vec2 {
+     let direction = rotate90(&&unit(&sub(&pos,&sun.position)));
+     scale(&direction, r*0.3 + 0.3)
+ }
+
+ fn random_object((mass,vel,a,b):(f32,f32, f32, f32), sun: Object, n: i32) -> Object {
+    let p = random_position(a, b, sun.position);
+    let o = Object {
+        position: p,
+        mass: mass * 0.2,
+        velocity: random_velocity(vel, p, sun),
+        force: Vec2(0.0,0.0)
+    };
+
+    o
+ }
 
 #[derive(Debug)]
 struct Arguments {
