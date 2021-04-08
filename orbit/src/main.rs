@@ -9,13 +9,13 @@
 use text_colorizer::*;
 use std::env;
 
-extern crate rand;
+use rand::prelude::*;
 
 fn main() {
     let args = parse_args();
     let mut objects : Vec<Object> = Vec::new();
     let sun = Object {
-        position: Vec2(0.0,0.0),
+        position: Vec2(400.0,400.0),
         mass: 30.0,
         velocity: Vec2(0.0,0.0),
         force: Vec2(0.0,0.0)
@@ -23,43 +23,49 @@ fn main() {
 
     objects.push(sun);
 
+    println!("Command line arguments: {:?}", args);
+
     for _i in 0..args.num_objects {
-        let x : (f32,f32,f32,f32) = rand::random();
+        let x : (f32,f32,f32,f32) = (
+            rand::thread_rng().gen::<f32>() * 10.0, // mass
+            rand::thread_rng().gen::<f32>() * 100.0, // velo
+            rand::thread_rng().gen::<f32>() * 800.0, // pos x
+            rand::thread_rng().gen::<f32>() * 800.0 // pos y
+        );
         let obj = random_object(x, sun);
-        objects.push(obj);
+        println!("{:?}", obj);
+        objects.push(obj);       
     }
+
+    
+
+    println!("Number of objects {:?}", objects.len());
 
     for _i in 0..args.delta { 
         objects = update_all(&objects);
     }
 
+    println!("After iteration {:?}", objects.len());
+
     let imgx = 800;
     let imgy = 800;
-
-    let scalex = 3.0 / imgx as f32;
-    let scaley = 3.0 / imgy as f32;
 
     // Create a new ImgBuf with width: imgx and height: imgy
     let mut imgbuf = image::ImageBuffer::new(imgx, imgy);
    
-    // Generate a giant red square
-    for x in 0..imgx {
-        for y in 0..imgy {
+    for object in objects {
+        let x = object.position.0 as u32;
+        let y = object.position.1 as u32;
+
+        if x < imgx && y < imgy as u32 {
             let pixel = imgbuf.get_pixel_mut(x, y);
             let image::Rgb(data) = *pixel;
-            *pixel = image::Rgb([255u8, 0u8, 0u8]);
+            *pixel = image::Rgb([255u8, 0u8, 0u8]); 
         }
     }
 
     // Save the image
     imgbuf.save(args.output).unwrap();    
- }
-
- fn random_position(x: f32, y: f32, sun_position: Vec2) -> Vec2 {
-     let r = x * 150.0 + 80.0;
-     let theta = y * 2.0 * 3.14; // use PI!
-
-     add(&sun_position, &Vec2(r * theta.cos(), r * theta.sin()))
  }
 
  fn random_velocity(r: f32, pos: Vec2, sun: Object) -> Vec2 {
@@ -68,7 +74,7 @@ fn main() {
  }
 
  fn random_object((mass,vel,a,b):(f32,f32, f32, f32), sun: Object) -> Object {
-    let p = random_position(a, b, sun.position);
+    let p = Vec2(a, b);
     
     Object {
         position: p,
