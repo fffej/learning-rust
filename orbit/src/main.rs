@@ -15,8 +15,8 @@ fn main() {
     let args = parse_args();
     let mut objects : Vec<Object> = Vec::new();
     let sun = Object {
-        position: Vec2(400.0,400.0),
-        mass: 30.0,
+        position: Vec2(512.0,512.0),
+        mass: 300000.0,
         velocity: Vec2(0.0,0.0),
         force: Vec2(0.0,0.0)
     };
@@ -27,40 +27,33 @@ fn main() {
 
     for _i in 0..args.num_objects {
         let x : (f32,f32,f32,f32) = (
-            rand::thread_rng().gen::<f32>() * 10.0, // mass
-            rand::thread_rng().gen::<f32>() * 100.0, // velo
-            rand::thread_rng().gen::<f32>() * 800.0, // pos x
-            rand::thread_rng().gen::<f32>() * 800.0 // pos y
+            rand::thread_rng().gen::<f32>() * 1.0, // mass
+            rand::thread_rng().gen::<f32>() * 1.0, // velo
+            32f32, // rand::thread_rng().gen::<f32>() * 800.0, // pos x
+            32f32  // rand::thread_rng().gen::<f32>() * 800.0 // pos y
         );
-        let obj = random_object(x, sun);
-        println!("{:?}", obj);
+        let obj = random_object(x, sun);        
         objects.push(obj);       
-    }
+    } 
 
-    
-
-    println!("Number of objects {:?}", objects.len());
-
-    for _i in 0..args.delta { 
-        objects = update_all(&objects);
-    }
-
-    println!("After iteration {:?}", objects.len());
-
-    let imgx = 800;
-    let imgy = 800;
+    let imgx = 1024;
+    let imgy = 1024;
 
     // Create a new ImgBuf with width: imgx and height: imgy
     let mut imgbuf = image::ImageBuffer::new(imgx, imgy);
    
-    for object in objects {
-        let x = object.position.0 as u32;
-        let y = object.position.1 as u32;
+    for i in 0 .. args.delta {
+        objects = update_all(&objects);
 
-        if x < imgx && y < imgy as u32 {
-            let pixel = imgbuf.get_pixel_mut(x, y);
-            let image::Rgb(data) = *pixel;
-            *pixel = image::Rgb([255u8, 0u8, 0u8]); 
+        for object in &objects {
+            let x = object.position.0 as u32;
+            let y = object.position.1 as u32;
+
+            if x < imgx && y < imgy as u32 {
+                let pixel = imgbuf.get_pixel_mut(x, y);
+                let image::Rgb(_data) = *pixel;
+                *pixel = image::Rgb([255u8, 0u8, 0u8]); 
+            }
         }
     }
 
@@ -125,6 +118,13 @@ fn add(a: &Vec2, b: &Vec2) -> Vec2 {
     Vec2(a.0 + b.0, a.1 + b.1)
 }
 
+#[test]
+fn test_add_works() {
+    let a = Vec2(1.0,2.0);
+    let b = Vec2(3.0,4.0);
+    assert_eq!(Vec2(4.0,6.0), add(&a,&b));
+}
+
 fn sub(a: &Vec2, b: &Vec2) -> Vec2 {
     Vec2(a.0 - b.0, a.1 - b.1)
 }
@@ -133,6 +133,14 @@ fn distance(a: &Vec2, b: &Vec2) -> f32 {
     let x = (a.0 - b.0).powf(2.0);
     let y = (a.1 - b.1).powf(2.0);
     (x+y).sqrt()
+}
+
+#[test]
+fn test_distance() {
+    let a = Vec2(0.0,0.0);
+    let b = Vec2(3.0,3.0);
+
+    assert_eq!((18.0f32).sqrt(), distance(&a,&b));
 }
 
 fn scale(a: &Vec2, d: f32) -> Vec2 {
@@ -297,4 +305,35 @@ fn update_all(a: &Vec<Object>) -> Vec<Object> {
     let z = accelerate_all(&y);
 
     reposition_all(&z)
+}
+
+#[test]
+fn test_update_all() {
+    let sun = Object {
+        position: Vec2(512.0,512.0),
+        mass: 300000.0,
+        velocity: Vec2(0.0,0.0),
+        force: Vec2(0.0,0.0)
+    };
+    
+    let obj = Object {
+        position: Vec2(0.0,0.0),
+        mass: 1.0,
+        velocity: Vec2(0.0,0.0),
+        force: Vec2(0.0,0.0)
+    };
+
+    let mut objects : Vec<Object> = Vec::new();
+    objects.push(sun);
+    objects.push(obj);
+
+    let result = update_all(&objects);
+    
+    // Mass shouldn't change (and I should be able to enforce this with code right?)
+    assert_eq!(sun.mass, result[0].mass);
+    assert_eq!(obj.mass, result[1].mass);
+
+
+    println!("Object: {:?}", objects);
+    println!("Result: {:?}", result);
 }
