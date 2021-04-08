@@ -32,6 +32,27 @@ fn main() {
     for _i in 0..args.delta { 
         objects = update_all(&objects);
     }
+
+    let imgx = 800;
+    let imgy = 800;
+
+    let scalex = 3.0 / imgx as f32;
+    let scaley = 3.0 / imgy as f32;
+
+    // Create a new ImgBuf with width: imgx and height: imgy
+    let mut imgbuf = image::ImageBuffer::new(imgx, imgy);
+   
+    // Generate a giant red square
+    for x in 0..imgx {
+        for y in 0..imgy {
+            let pixel = imgbuf.get_pixel_mut(x, y);
+            let image::Rgb(data) = *pixel;
+            *pixel = image::Rgb([255u8, 0u8, 0u8]);
+        }
+    }
+
+    // Save the image
+    imgbuf.save(args.output).unwrap();    
  }
 
  fn random_position(x: f32, y: f32, sun_position: Vec2) -> Vec2 {
