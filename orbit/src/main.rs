@@ -8,14 +8,11 @@
 
 use text_colorizer::*;
 use std::env;
-use rand::thread_rng;
-use rand::Rng;
 
 extern crate rand;
 
 fn main() {
     let args = parse_args();
-    let rng = thread_rng();
     let mut objects : Vec<Object> = Vec::new();
     let sun = Object {
         position: Vec2(0.0,0.0),
@@ -26,13 +23,15 @@ fn main() {
 
     objects.push(sun);
 
-    for n in 0 .. args.num_objects {
+    for _i in 0..args.num_objects {
         let x : (f32,f32,f32,f32) = rand::random();
         let obj = random_object(x, sun);
         objects.push(obj);
     }
 
-
+    for _i in 0..args.delta { 
+        objects = update_all(&objects);
+    }
  }
 
  fn random_position(x: f32, y: f32, sun_position: Vec2) -> Vec2 {
@@ -101,10 +100,6 @@ fn add(a: &Vec2, b: &Vec2) -> Vec2 {
 
 fn sub(a: &Vec2, b: &Vec2) -> Vec2 {
     Vec2(a.0 - b.0, a.1 - b.1)
-}
-
-fn average(a: &Vec2, b: &Vec2) -> Vec2 {
-    Vec2((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0)
 }
 
 fn distance(a: &Vec2, b: &Vec2) -> f32 {
@@ -229,7 +224,6 @@ fn merge(a: &Object, b: &Object) -> Object {
 }
 
 fn collide_all(a: &Vec<Object>) -> Vec<Object> {
-    let r:Vec<Object> = Vec::new();
     let mut collided_pairs:Vec<(&Object,&Object)> = Vec::new();
     let mut inert:Vec<Object> = Vec::new();
 
@@ -239,8 +233,6 @@ fn collide_all(a: &Vec<Object>) -> Vec<Object> {
             if src == tgt {
                 continue;
             }
-
-            let t = (src,tgt);
 
             // This makes me vomit  
             if collide(src,tgt) && !collided_pairs.contains( &(tgt,src) ){
