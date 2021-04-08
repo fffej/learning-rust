@@ -15,8 +15,8 @@ extern crate rand;
 
 fn main() {
     let args = parse_args();
-    let mut rng = thread_rng();
-    let objects : Vec<Object> = Vec::new();
+    let rng = thread_rng();
+    let mut objects : Vec<Object> = Vec::new();
     let sun = Object {
         position: Vec2(0.0,0.0),
         mass: 30.0,
@@ -24,10 +24,15 @@ fn main() {
         force: Vec2(0.0,0.0)
     };
 
+    objects.push(sun);
+
     for n in 0 .. args.num_objects {
         let x : (f32,f32,f32,f32) = rand::random();
-
+        let obj = random_object(x, sun);
+        objects.push(obj);
     }
+
+
  }
 
  fn random_position(x: f32, y: f32, sun_position: Vec2) -> Vec2 {
@@ -42,16 +47,15 @@ fn main() {
      scale(&direction, r*0.3 + 0.3)
  }
 
- fn random_object((mass,vel,a,b):(f32,f32, f32, f32), sun: Object, n: i32) -> Object {
+ fn random_object((mass,vel,a,b):(f32,f32, f32, f32), sun: Object) -> Object {
     let p = random_position(a, b, sun.position);
-    let o = Object {
+    
+    Object {
         position: p,
         mass: mass * 0.2,
         velocity: random_velocity(vel, p, sun),
         force: Vec2(0.0,0.0)
-    };
-
-    o
+    }
  }
 
 #[derive(Debug)]
@@ -169,6 +173,22 @@ fn calculate_forces_on_all(a : &Vec<Object>) -> Vec<Object> {
   a.iter().map(|o| accumulate_forces(o,a)).collect()
 }
 
+fn accelerate(o: &Object) -> Object {
+
+    let av = add(&o.velocity, &scale(&o.force, 1.0/o.mass));
+
+    Object {
+        position: o.position,
+        mass: o.mass, 
+        force: Vec2(0.0,0.0),
+        velocity: av
+    }
+}
+
+fn accelerate_all(objs: &Vec<Object>) -> Vec<Object> {
+    objs.iter().map(|x| accelerate(x)).collect()
+}
+
 fn reposition(a: &Object) -> Object {
     Object {
         position: add(&a.position, &a.velocity),
@@ -209,11 +229,6 @@ fn merge(a: &Object, b: &Object) -> Object {
 }
 
 fn collide_all(a: &Vec<Object>) -> Vec<Object> {
-    Vec::new()
-}
-
-fn update_all(a: &Vec<Object>) -> Vec<Object> {
-
     let r:Vec<Object> = Vec::new();
     let mut collided_pairs:Vec<(&Object,&Object)> = Vec::new();
     let mut inert:Vec<Object> = Vec::new();
@@ -251,7 +266,16 @@ fn update_all(a: &Vec<Object>) -> Vec<Object> {
 
     // Merge together the collided pairs
     let mut merged : Vec<Object> = collided_pairs.iter().map(| x | merge(x.0,x.1)).collect();
-    inert.append(&mut merged);
+    inert.append(&mut merged);  
 
     inert
+}
+
+// TODO pipeline/composition
+fn update_all(a: &Vec<Object>) -> Vec<Object> {
+    let x = collide_all(&a);
+    let y = calculate_forces_on_all(&x);
+    let z = accelerate_all(&y);
+
+    reposition_all(&z)
 }
