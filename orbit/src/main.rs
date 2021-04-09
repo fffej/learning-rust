@@ -4,7 +4,6 @@
 // - Use mutation confidentally!
 // - Replace vomit inducing pairs gubbins near the bottom
 // - Improve type safety of Vec2
-// - Use Pi!
 // - Use constants rather than hard-coding
 
 use text_colorizer::*;
@@ -12,14 +11,20 @@ use std::env;
 
 use rand::prelude::*;
 
+const IMAGE_SIZE: u32 = 1024;
+const VEC_ZERO: Vec2 = Vec2(0.0,0.0);
+
 fn main() {
+
+
     let args = parse_args();
     let sun = Object {
-        position: Vec2(512.0,512.0),
+        position: Vec2(IMAGE_SIZE as f32 / 2.0, IMAGE_SIZE as f32 / 2.0),
         mass: 30.0,
-        velocity: Vec2(0.0,0.0),
-        force: Vec2(0.0,0.0)
+        velocity: VEC_ZERO,
+        force: VEC_ZERO
     };
+
     let mut objects : Vec<Object> = Vec::new();
     objects.push(sun);
 
@@ -36,11 +41,8 @@ fn main() {
 
     println!("Objects{:?}", objects);
 
-    let imgx = 1024;
-    let imgy = 1024;
-
     // Create a new ImgBuf with width: imgx and height: imgy
-    let mut imgbuf = image::ImageBuffer::new(imgx, imgy);
+    let mut imgbuf = image::ImageBuffer::new(IMAGE_SIZE, IMAGE_SIZE);
     let mut ignored = 0;
 
     for i in 0 .. args.iterations {
@@ -51,7 +53,7 @@ fn main() {
             let x = object.position.0 as u32;
             let y = object.position.1 as u32;
 
-            if x < imgx && y < imgy as u32 {
+            if x < IMAGE_SIZE as u32 && y < IMAGE_SIZE as u32 {
                 let pixel = imgbuf.get_pixel_mut(x, y);
                 let image::Rgb(_data) = *pixel;
                 *pixel = image::Rgb([255u8, i as u8, i as u8]); 
@@ -79,13 +81,13 @@ fn main() {
         position: p,
         mass: mass * 0.2,
         velocity: random_velocity(vel, p, sun),
-        force: Vec2(0.0,0.0)
+        force: VEC_ZERO
     }
  }
 
  fn random_position(x: f32, y: f32, sun_pos: &Vec2) -> Vec2 {
      let r = x * 150.0 + 80.0;
-     let theta = y * 2.0 * 3.142; // TODO, find the constant!
+     let theta = y * 2.0 * std::f32::consts::PI; 
      add(&sun_pos, &Vec2(r * theta.cos(), r * theta.sin()))
  }
 
@@ -142,7 +144,7 @@ fn distance(a: &Vec2, b: &Vec2) -> f32 {
 
 #[test]
 fn test_distance() {
-    let a = Vec2(0.0,0.0);
+    let a = VEC_ZERO;
     let b = Vec2(3.0,3.0);
 
     assert_eq!((18.0f32).sqrt(), distance(&a,&b));
@@ -189,13 +191,15 @@ fn gravity(m1: f32, m2: f32, r: f32) -> f32 {
 fn force_between(a: &Object, b: &Object) -> Force {
     let uv = unit(&sub(&b.position, &a.position));
     let g = gravity(a.mass, b.mass, distance(&a.position, &b.position));
+    
     scale(&uv,g)
 }
 
 fn accumulate_forces(a: &Object, b: &Vec<Object>) -> Object {
-    let f = b.iter().fold(Vec2(0.0,0.0), | acc, x | {
+    let f = b.iter().fold(VEC_ZERO, | acc, x | {
         add(&acc,&force_between(x, a))
     });
+    
     Object{
         position: Vec2(a.position.0, a.position.1),
         mass: a.mass,
@@ -215,7 +219,7 @@ fn accelerate(o: &Object) -> Object {
     Object {
         position: o.position,
         mass: o.mass, 
-        force: Vec2(0.0,0.0),
+        force: VEC_ZERO,
         velocity: av
     }
 }
@@ -317,15 +321,15 @@ fn test_update_all() {
     let sun = Object {
         position: Vec2(512.0,512.0),
         mass: 300000.0,
-        velocity: Vec2(0.0,0.0),
-        force: Vec2(0.0,0.0)
+        velocity: VEC_ZERO,
+        force: VEC_ZERO
     };
     
     let obj = Object {
-        position: Vec2(0.0,0.0),
+        position: VEC_ZERO,
         mass: 1.0,
-        velocity: Vec2(0.0,0.0),
-        force: Vec2(0.0,0.0)
+        velocity: VEC_ZERO,
+        force: VEC_ZERO
     };
 
     let mut objects : Vec<Object> = Vec::new();
