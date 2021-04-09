@@ -119,7 +119,7 @@ fn parse_args() -> Arguments {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 struct Vec2(f32, f32);
 
 type Position = Vec2;
@@ -169,7 +169,7 @@ fn rotate90(a: &Vec2) -> Vec2 {
     Vec2(-a.1, a.0)
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 struct Object {
     position: Position,
     mass: f32,
