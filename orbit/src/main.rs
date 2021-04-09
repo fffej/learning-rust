@@ -13,18 +13,17 @@ use rand::prelude::*;
 
 const IMAGE_SIZE: u32 = 1024;
 const VEC_ZERO: Vec2 = Vec2(0.0, 0.0);
+const SUN: Object = Object {
+    position: Vec2(IMAGE_SIZE as f32 / 2.0, IMAGE_SIZE as f32 / 2.0),
+    mass: 30.0,
+    velocity: VEC_ZERO,
+    force: VEC_ZERO,
+};
 
 fn main() {
     let args = parse_args();
-    let sun = Object {
-        position: Vec2(IMAGE_SIZE as f32 / 2.0, IMAGE_SIZE as f32 / 2.0),
-        mass: 30.0,
-        velocity: VEC_ZERO,
-        force: VEC_ZERO,
-    };
-
     let mut objects: Vec<Object> = Vec::new();
-    objects.push(sun);
+    objects.push(SUN);
 
     for _i in 0..args.num_objects {
         let x: (f32, f32, f32, f32) = (
@@ -33,7 +32,7 @@ fn main() {
             rand::thread_rng().gen::<f32>(), // pos x
             rand::thread_rng().gen::<f32>(), // pos y
         );
-        let obj = random_object(x, sun);
+        let obj = random_object(x);
         objects.push(obj);
     }
 
@@ -66,26 +65,26 @@ fn main() {
     imgbuf.save(args.output).unwrap();
 }
 
-fn random_velocity(r: f32, pos: Vec2, sun: Object) -> Vec2 {
-    let sun_direction = unit(&sub(&pos, &sun.position));
+fn random_velocity(r: f32, pos: &Vec2) -> Vec2 {
+    let sun_direction = unit(&sub(&pos, &SUN.position));
     let direction = rotate90(&sun_direction);
     scale(&direction, r * 0.3 + 0.3)
 }
 
-fn random_object((mass, vel, a, b): (f32, f32, f32, f32), sun: Object) -> Object {
-    let p = random_position(a, b, &sun.position);
+fn random_object((mass, vel, a, b): (f32, f32, f32, f32)) -> Object {
+    let p = random_position(a, b);
     Object {
-        position: p,
+        position: Vec2(p.0, p.1),
         mass: mass * 0.2,
-        velocity: random_velocity(vel, p, sun),
+        velocity: random_velocity(vel, &p),
         force: VEC_ZERO,
     }
 }
 
-fn random_position(x: f32, y: f32, sun_pos: &Vec2) -> Vec2 {
+fn random_position(x: f32, y: f32) -> Vec2 {
     let r = x * 150.0 + 80.0;
     let theta = y * 2.0 * std::f32::consts::PI;
-    add(&sun_pos, &Vec2(r * theta.cos(), r * theta.sin()))
+    add(&SUN.position, &Vec2(r * theta.cos(), r * theta.sin()))
 }
 
 #[derive(Debug)]
@@ -120,7 +119,7 @@ fn parse_args() -> Arguments {
     }
 }
 
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq)]
 struct Vec2(f32, f32);
 
 type Position = Vec2;
@@ -170,7 +169,7 @@ fn rotate90(a: &Vec2) -> Vec2 {
     Vec2(-a.1, a.0)
 }
 
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq)]
 struct Object {
     position: Position,
     mass: f32,
@@ -214,7 +213,7 @@ fn accelerate(o: &Object) -> Object {
     let av = add(&o.velocity, &scale(&o.force, 1.0 / o.mass));
 
     Object {
-        position: o.position,
+        position: Vec2(o.position.0, o.position.1),
         mass: o.mass,
         force: VEC_ZERO,
         velocity: av,
