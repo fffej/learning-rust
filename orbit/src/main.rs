@@ -5,6 +5,7 @@
 // - Replace vomit inducing pairs gubbins near the bottom
 // - Improve type safety of Vec2
 // - Use Pi!
+// - Use constants rather than hard-coding
 
 use text_colorizer::*;
 use std::env;
@@ -13,37 +14,38 @@ use rand::prelude::*;
 
 fn main() {
     let args = parse_args();
-    let mut objects : Vec<Object> = Vec::new();
     let sun = Object {
         position: Vec2(512.0,512.0),
-        mass: 300000.0,
+        mass: 30.0,
         velocity: Vec2(0.0,0.0),
         force: Vec2(0.0,0.0)
     };
-
+    let mut objects : Vec<Object> = Vec::new();
     objects.push(sun);
-
-    println!("Command line arguments: {:?}", args);
 
     for _i in 0..args.num_objects {
         let x : (f32,f32,f32,f32) = (
-            rand::thread_rng().gen::<f32>() * 1.0, // mass
-            rand::thread_rng().gen::<f32>() * 1.0, // velo
-            32f32, // rand::thread_rng().gen::<f32>() * 800.0, // pos x
-            32f32  // rand::thread_rng().gen::<f32>() * 800.0 // pos y
+            rand::thread_rng().gen::<f32>(), // mass
+            rand::thread_rng().gen::<f32>(), // velo
+            rand::thread_rng().gen::<f32>(), // pos x
+            rand::thread_rng().gen::<f32>()  // pos y
         );
         let obj = random_object(x, sun);        
         objects.push(obj);       
     } 
+
+    println!("Objects{:?}", objects);
 
     let imgx = 1024;
     let imgy = 1024;
 
     // Create a new ImgBuf with width: imgx and height: imgy
     let mut imgbuf = image::ImageBuffer::new(imgx, imgy);
-   
-    for i in 0 .. args.delta {
+    let mut ignored = 0;
+
+    for i in 0 .. args.iterations {
         objects = update_all(&objects);
+    
 
         for object in &objects {
             let x = object.position.0 as u32;
@@ -52,23 +54,27 @@ fn main() {
             if x < imgx && y < imgy as u32 {
                 let pixel = imgbuf.get_pixel_mut(x, y);
                 let image::Rgb(_data) = *pixel;
-                *pixel = image::Rgb([255u8, 0u8, 0u8]); 
+                *pixel = image::Rgb([255u8, i as u8, i as u8]); 
+            } else {
+                ignored = ignored+1;
             }
         }
     }
+
+    println!("ignored {}", ignored);
 
     // Save the image
     imgbuf.save(args.output).unwrap();    
  }
 
  fn random_velocity(r: f32, pos: Vec2, sun: Object) -> Vec2 {
-     let direction = rotate90(&&unit(&sub(&pos,&sun.position)));
+     let sun_direction = unit(&sub(&pos,& sun.position));
+     let direction = rotate90(&sun_direction);
      scale(&direction, r*0.3 + 0.3)
  }
 
  fn random_object((mass,vel,a,b):(f32,f32, f32, f32), sun: Object) -> Object {
-    let p = Vec2(a, b);
-    
+    let p = random_position(a,b, &sun.position);
     Object {
         position: p,
         mass: mass * 0.2,
@@ -77,10 +83,16 @@ fn main() {
     }
  }
 
+ fn random_position(x: f32, y: f32, sun_pos: &Vec2) -> Vec2 {
+     let r = x * 150.0 + 80.0;
+     let theta = y * 2.0 * 3.142; // TODO, find the constant!
+     add(&sun_pos, &Vec2(r * theta.cos(), r * theta.sin()))
+ }
+
 #[derive(Debug)]
 struct Arguments {
     num_objects: i32,
-    delta: i32,
+    iterations: i32,
     output: String
 }
 
@@ -101,7 +113,7 @@ fn parse_args() -> Arguments {
 
     Arguments {
         num_objects: args[0].parse().unwrap(),
-        delta: args[1].parse().unwrap(),
+        iterations: args[1].parse().unwrap(),
         output: args[2].clone()
     }
 }
@@ -118,15 +130,8 @@ fn add(a: &Vec2, b: &Vec2) -> Vec2 {
     Vec2(a.0 + b.0, a.1 + b.1)
 }
 
-#[test]
-fn test_add_works() {
-    let a = Vec2(1.0,2.0);
-    let b = Vec2(3.0,4.0);
-    assert_eq!(Vec2(4.0,6.0), add(&a,&b));
-}
-
 fn sub(a: &Vec2, b: &Vec2) -> Vec2 {
-    Vec2(a.0 - b.0, a.1 - b.1)
+    Vec2(b.0 - a.0, b.1 - a.1)
 }
 
 fn distance(a: &Vec2, b: &Vec2) -> f32 {
@@ -216,7 +221,7 @@ fn accelerate(o: &Object) -> Object {
 }
 
 fn accelerate_all(objs: &Vec<Object>) -> Vec<Object> {
-    objs.iter().map(|x| accelerate(x)).collect()
+    objs.iter().map(accelerate).collect()
 }
 
 fn reposition(a: &Object) -> Object {
@@ -229,12 +234,12 @@ fn reposition(a: &Object) -> Object {
 }
 
 fn reposition_all(a: &Vec<Object>) -> Vec<Object> {
-    a.iter().map(|o| reposition(o)).collect()
+    a.iter().map(reposition).collect()
 }
 
 
 fn collide(a: &Object, b: &Object) -> bool {
-    distance (&a.position, &b.position) <= 3.0
+    distance(&a.position, &b.position) <= 3.0
 }
 
 fn merge(a: &Object, b: &Object) -> Object {
@@ -270,8 +275,8 @@ fn collide_all(a: &Vec<Object>) -> Vec<Object> {
             }
 
             // This makes me vomit  
-            if collide(src,tgt) && !collided_pairs.contains( &(tgt,src) ){
-                    collided_pairs.push( (src,tgt) );
+            if collide(src,tgt) && !collided_pairs.contains( &(tgt,src) ) {
+                collided_pairs.push( (src,tgt) );
             }
         }
     }
