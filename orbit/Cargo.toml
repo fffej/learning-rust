@@ -9,4 +9,4 @@ edition = "2018"
 [dependencies]
 text-colorizer = "1"
 rand = "0.8.3"
-image = "0.23.14"
+webp-animation = "0.1.3"

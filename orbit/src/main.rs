@@ -4,12 +4,11 @@
 // - Use mutation confidentally!
 // - Replace vomit inducing pairs gubbins near the bottom
 // - Improve type safety of Vec2
-// - Use constants rather than hard-coding
 
 use std::env;
 use text_colorizer::*;
-
 use rand::prelude::*;
+use webp_animation::{Encoder, Frame};
 
 const IMAGE_SIZE: u32 = 1024;
 const VEC_ZERO: Vec2 = Vec2(0.0, 0.0);
@@ -38,31 +37,36 @@ fn main() {
 
     println!("Objects{:?}", objects);
 
-    // Create a new ImgBuf with width: imgx and height: imgy
-    let mut imgbuf = image::ImageBuffer::new(IMAGE_SIZE, IMAGE_SIZE);
     let mut ignored = 0;
 
-    for i in 0..args.iterations {
+    let dimensions = (IMAGE_SIZE, IMAGE_SIZE);
+    const BUFFER_SIZE : usize = (IMAGE_SIZE as usize) * (IMAGE_SIZE as usize);
+    let mut encoder = Encoder::new(dimensions).unwrap();
+    
+
+    let mut frame = [0,0,0,255].repeat(BUFFER_SIZE);
+
+    for i in 0..args.iterations {     
+
         objects = update_all(&objects);
 
         for object in &objects {
-            let x = object.position.0 as u32;
-            let y = object.position.1 as u32;
+            // work out x/y co-ordinates
+            let x = object.position.0 as usize;
+            let y = object.position.1 as usize;
 
-            if x < IMAGE_SIZE as u32 && y < IMAGE_SIZE as u32 {
-                let pixel = imgbuf.get_pixel_mut(x, y);
-                let image::Rgb(_data) = *pixel;
-                *pixel = image::Rgb([255u8, i as u8, i as u8]);
-            } else {
-                ignored = ignored + 1;
-            }
+            // RGBA
+            let arrayPos : usize = (4usize) * x + (y * (IMAGE_SIZE as usize) * 4usize);
+            frame[arrayPos] = 255; // ignore the other bits
         }
+
+        encoder.add_frame(&frame, i).unwrap();
     }
 
     println!("ignored {}", ignored);
 
-    // Save the image
-    imgbuf.save(args.output).unwrap();
+    let webp_data = encoder.finalize(args.iterations+1).unwrap();
+    std::fs::write(args.output, webp_data).unwrap();
 }
 
 fn random_velocity(r: f32, pos: &Vec2) -> Vec2 {
