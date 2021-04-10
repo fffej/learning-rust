@@ -265,9 +265,13 @@ fn merge(a: &Object, b: &Object) -> Object {
     }
 }
 
+
 fn collide_all(a: &Vec<Object>) -> Vec<Object> {
+          
     let mut collided_pairs: Vec<(&Object, &Object)> = Vec::new();
     let mut inert: Vec<Object> = Vec::new();
+
+    let mut output: Vec<Object> = Vec::new(); 
 
     // Find all the pairs that have collided
     for src in a.iter() {
