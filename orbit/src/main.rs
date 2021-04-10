@@ -57,7 +57,12 @@ fn main() {
 
             // RGBA
             let arrayPos : usize = (4usize) * x + (y * (IMAGE_SIZE as usize) * 4usize);
-            frame[arrayPos] = 255; // ignore the other bits
+
+            if (arrayPos <= frame.len()) {
+                frame[arrayPos] = 255; // ignore the other bits
+            } else {
+                ignored = ignored + 1;
+            }
         }
 
         encoder.add_frame(&frame, i).unwrap();
@@ -266,6 +271,7 @@ fn merge(a: &Object, b: &Object) -> Object {
 }
 
 
+
 fn collide_all(a: &Vec<Object>) -> Vec<Object> {
           
     let mut collided_pairs: Vec<(&Object, &Object)> = Vec::new();
@@ -273,22 +279,21 @@ fn collide_all(a: &Vec<Object>) -> Vec<Object> {
 
     let mut output: Vec<Object> = Vec::new(); 
 
-    // Find all the pairs that have collided
-    for src in a.iter() {
-        for tgt in a.iter() {
-            if src == tgt {
-                continue;
+    for i in 0..a.len() {
+        let mut found = false;
+        for j in i+1..a.len() {
+            if (collide(&a[i], &a[j])) {
+                found = true;
+                collided_pairs.push((&a[i],&a[j]));
             }
-
-            // This makes me vomit
-            if collide(src, tgt) && !collided_pairs.contains(&(tgt, src)) {
-                collided_pairs.push((src, tgt));
-            }
+        }        
+        if !found {
+            inert.push(a[i]);
         }
     }
 
     // Find all the objects not involved in collisions
-    for obj in a.iter() {
+    /*for obj in a.iter() {
         let mut found = false;
         for (src, tgt) in collided_pairs.iter() {
             if obj == *src || obj == *tgt {
@@ -300,7 +305,7 @@ fn collide_all(a: &Vec<Object>) -> Vec<Object> {
         if !found {
             inert.push(*obj);
         }
-    }
+    }*/
 
     // Merge together the collided pairs
     let mut merged: Vec<Object> = collided_pairs.iter().map(|x| merge(x.0, x.1)).collect();
