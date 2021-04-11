@@ -8,12 +8,15 @@
 use std::env;
 use text_colorizer::*;
 use rand::prelude::*;
-use webp_animation::{Encoder, Frame};
+use webp_animation::{Encoder};
+
+mod vec3;
+use vec3::*;
 
 const IMAGE_SIZE: u32 = 1024;
 const VEC_ZERO: Vec2 = Vec2(0.0, 0.0);
 const SUN: Object = Object {
-    position: Vec2(IMAGE_SIZE as f32 / 2.0, IMAGE_SIZE as f32 / 2.0),
+    position: Vec2(IMAGE_SIZE as f64 / 2.0, IMAGE_SIZE as f64 / 2.0),
     mass: 30.0,
     velocity: VEC_ZERO,
     force: VEC_ZERO,
@@ -25,11 +28,11 @@ fn main() {
     objects.push(SUN);
 
     for _i in 0..args.num_objects {
-        let x: (f32, f32, f32, f32) = (
-            rand::thread_rng().gen::<f32>(), // mass
-            rand::thread_rng().gen::<f32>(), // velo
-            rand::thread_rng().gen::<f32>(), // pos x
-            rand::thread_rng().gen::<f32>(), // pos y
+        let x: (f64, f64, f64, f64) = (
+            rand::thread_rng().gen::<f64>(), // mass
+            rand::thread_rng().gen::<f64>(), // velo
+            rand::thread_rng().gen::<f64>(), // pos x
+            rand::thread_rng().gen::<f64>(), // pos y
         );
         let obj = random_object(x);
         objects.push(obj);
@@ -56,10 +59,10 @@ fn main() {
             let y = object.position.1 as usize;
 
             // RGBA
-            let arrayPos : usize = (4usize) * x + (y * (IMAGE_SIZE as usize) * 4usize);
+            let array_pos : usize = (4usize) * x + (y * (IMAGE_SIZE as usize) * 4usize);
 
-            if (arrayPos <= frame.len()) {
-                frame[arrayPos] = 255; // ignore the other bits
+            if array_pos <= frame.len() {
+                frame[array_pos] = 255; // ignore the other bits
             } else {
                 ignored = ignored + 1;
             }
@@ -74,13 +77,13 @@ fn main() {
     std::fs::write(args.output, webp_data).unwrap();
 }
 
-fn random_velocity(r: f32, pos: &Vec2) -> Vec2 {
+fn random_velocity(r: f64, pos: &Vec2) -> Vec2 {
     let sun_direction = unit(&sub(&pos, &SUN.position));
     let direction = rotate90(&sun_direction);
     scale(&direction, r * 0.3 + 0.3)
 }
 
-fn random_object((mass, vel, a, b): (f32, f32, f32, f32)) -> Object {
+fn random_object((mass, vel, a, b): (f64, f64, f64, f64)) -> Object {
     let p = random_position(a, b);
     Object {
         position: Vec2(p.0, p.1),
@@ -90,9 +93,9 @@ fn random_object((mass, vel, a, b): (f32, f32, f32, f32)) -> Object {
     }
 }
 
-fn random_position(x: f32, y: f32) -> Vec2 {
+fn random_position(x: f64, y: f64) -> Vec2 {
     let r = x * 150.0 + 80.0;
-    let theta = y * 2.0 * std::f32::consts::PI;
+    let theta = y * 2.0 * std::f64::consts::PI;
     add(&SUN.position, &Vec2(r * theta.cos(), r * theta.sin()))
 }
 
@@ -128,65 +131,22 @@ fn parse_args() -> Arguments {
     }
 }
 
-#[derive(Debug, PartialEq, Copy, Clone)]
-struct Vec2(f32, f32);
 
 type Position = Vec2;
 type Velocity = Vec2;
 type Force = Vec2;
 
-fn add(a: &Vec2, b: &Vec2) -> Vec2 {
-    Vec2(a.0 + b.0, a.1 + b.1)
-}
 
-fn sub(a: &Vec2, b: &Vec2) -> Vec2 {
-    Vec2(b.0 - a.0, b.1 - a.1)
-}
-
-fn distance(a: &Vec2, b: &Vec2) -> f32 {
-    let x = (a.0 - b.0).powf(2.0);
-    let y = (a.1 - b.1).powf(2.0);
-    (x + y).sqrt()
-}
-
-#[test]
-fn test_distance() {
-    let a = VEC_ZERO;
-    let b = Vec2(3.0, 3.0);
-
-    assert_eq!((18.0f32).sqrt(), distance(&a, &b));
-}
-
-fn scale(a: &Vec2, d: f32) -> Vec2 {
-    Vec2(a.0 * d, a.1 * d)
-}
-
-fn magnitude(a: &Vec2) -> f32 {
-    (a.0 * a.0 + a.1 * a.1).sqrt()
-}
-
-fn unit(a: &Vec2) -> Vec2 {
-    let m = magnitude(&a);
-    if m == 0.0 {
-        Vec2(a.0, a.1)
-    } else {
-        scale(&a, 1.0 / m)
-    }
-}
-
-fn rotate90(a: &Vec2) -> Vec2 {
-    Vec2(-a.1, a.0)
-}
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 struct Object {
     position: Position,
-    mass: f32,
+    mass: f64,
     velocity: Velocity,
     force: Force,
 }
 
-fn gravity(m1: f32, m2: f32, r: f32) -> f32 {
+fn gravity(m1: f64, m2: f64, r: f64) -> f64 {
     if r == 0.0 {
         0.0
     } else {
@@ -206,7 +166,7 @@ fn accumulate_forces(a: &Object, b: &Vec<Object>) -> Object {
         .iter()
         .fold(VEC_ZERO, |acc, x| add(&acc, &force_between(x, a)));
 
-    println!("Force {:?}", f);        
+    //println!("Force {:?}", f);        
 
     Object {
         position: Vec2(a.position.0, a.position.1),
@@ -282,29 +242,28 @@ fn merge(a: &Object, b: &Object) -> Object {
 
 fn collide_all(a: &Vec<Object>) -> Vec<Object> {
           
-    let mut collided_pairs: Vec<(&Object, &Object)> = Vec::new();
-    let mut inert: Vec<Object> = Vec::new();
-
-    let mut output: Vec<Object> = Vec::new(); 
+    let mut merged: Vec<Object> = Vec::new();
+    let mut merged_indices: Vec<usize> = Vec::new();
 
     for i in 0..a.len() {
-        let mut found = false;
-        for j in i+1..a.len() {
-            if (collide(&a[i], &a[j])) {
-                found = true;
-                collided_pairs.push((&a[i],&a[j]));
+        
+        for j in i+1..a.len() {            
+            if collide(&a[i], &a[j]) {
+                merged.push(merge(&a[i],&a[j]));
+                merged_indices.push(i);
+                merged_indices.push(j);
             }
         }        
-        if !found {
-            inert.push(a[i]);
+    }  
+
+    for i in 0..a.len() {
+        if !merged_indices.contains(&i) { 
+            merged.push(a[i]);
         }
     }
+   
 
-    // Merge together the collided pairs
-    let mut merged: Vec<Object> = collided_pairs.iter().map(|x| merge(x.0, x.1)).collect();
-    inert.append(&mut merged);
-
-    inert
+   merged
 }
 
 // TODO pipeline/composition
@@ -341,7 +300,4 @@ fn test_update_all() {
     // Mass shouldn't change (and I should be able to enforce this with code right?)
     assert_eq!(sun.mass, result[0].mass);
     assert_eq!(obj.mass, result[1].mass);
-
-    println!("Object: {:?}", objects);
-    println!("Result: {:?}", result);
 }
