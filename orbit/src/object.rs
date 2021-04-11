@@ -54,7 +54,7 @@ pub fn accelerate(o: &Object) -> Object {
 }
 
 pub fn accelerate_all(objs: &Vec<Object>) -> Vec<Object> {
-    objs.iter().map(accelerate).collect()
+    objs.into_iter().map(accelerate).collect()
 }
 
 pub fn reposition(a: &Object) -> Object {
