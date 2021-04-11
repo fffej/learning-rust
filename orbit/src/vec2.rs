@@ -1,6 +1,8 @@
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub struct Vec2(pub f64, pub f64);
 
+pub const VEC_ZERO: Vec2 = Vec2(0.0, 0.0);
+
 pub fn add(a: &Vec2, b: &Vec2) -> Vec2 {
     Vec2(a.0 + b.0, a.1 + b.1)
 }
