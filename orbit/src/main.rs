@@ -206,6 +206,8 @@ fn accumulate_forces(a: &Object, b: &Vec<Object>) -> Object {
         .iter()
         .fold(VEC_ZERO, |acc, x| add(&acc, &force_between(x, a)));
 
+    println!("Force {:?}", f);        
+
     Object {
         position: Vec2(a.position.0, a.position.1),
         mass: a.mass,
@@ -257,17 +259,23 @@ fn merge(a: &Object, b: &Object) -> Object {
     let s = mx / merged_mass;
     let p1 = &a.position;
     let p2 = &b.position;
-    let uv = unit(&sub(&p2, &p1));
+    let uv = unit(&sub(&p1, &p2));
     let d = scale(&uv, s);
     let mv1 = scale(&a.velocity, mx);
     let mv2 = scale(&b.velocity, my);
 
-    Object {
-        position: add(&p1, &d),
+    let new_position = add(&p1, &d);
+    let new_velocity = scale(&add(&mv1, &mv2), 1.0 / merged_mass);
+    let new_force = add(&a.force, &b.force);
+
+    let result = Object {
+        position: new_position,
         mass: merged_mass,
-        velocity: scale(&add(&mv1, &mv2), 1.0 / merged_mass),
-        force: add(&a.force, &b.force),
-    }
+        velocity: new_velocity,
+        force: new_force
+    };
+
+    result
 }
 
 
@@ -291,21 +299,6 @@ fn collide_all(a: &Vec<Object>) -> Vec<Object> {
             inert.push(a[i]);
         }
     }
-
-    // Find all the objects not involved in collisions
-    /*for obj in a.iter() {
-        let mut found = false;
-        for (src, tgt) in collided_pairs.iter() {
-            if obj == *src || obj == *tgt {
-                found = true;
-                break;
-            }
-        }
-
-        if !found {
-            inert.push(*obj);
-        }
-    }*/
 
     // Merge together the collided pairs
     let mut merged: Vec<Object> = collided_pairs.iter().map(|x| merge(x.0, x.1)).collect();
