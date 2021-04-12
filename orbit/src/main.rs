@@ -6,15 +6,14 @@
 // - Improve type safety of Vec2
 
 mod object;
-mod vec2;
 mod scene;
+mod vec2;
 
 use std::env;
 use text_colorizer::*;
 use webp_animation::Encoder;
 
 use object::*;
-use vec2::*;
 use scene::*;
 
 const IMAGE_SIZE: u32 = 1024;
@@ -22,7 +21,10 @@ const IMAGE_SIZE: u32 = 1024;
 fn main() {
     let args = parse_args();
 
-    let scene = Scene(args.num_objects, IMAGE_SIZE);
+    let scene = Scene {
+        num_objects: args.num_objects as u32,
+        space_size: IMAGE_SIZE,
+    };
     let mut objects = scene.create();
 
     let dimensions = (IMAGE_SIZE, IMAGE_SIZE);
@@ -53,7 +55,6 @@ fn main() {
     let webp_data = encoder.finalize(args.iterations + 1).unwrap();
     std::fs::write(args.output, webp_data).unwrap();
 }
-
 
 #[derive(Debug)]
 struct Arguments {
