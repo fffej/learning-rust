@@ -1,4 +1,4 @@
-use super::vec2::{ * };
+use super::vec2::*;
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub struct Object {
@@ -28,7 +28,7 @@ pub fn accumulate_forces(a: &Object, b: &Vec<Object>) -> Object {
         .iter()
         .fold(VEC_ZERO, |acc, x| add(&acc, &force_between(x, a)));
 
-    //println!("Force {:?}", f);        
+    //println!("Force {:?}", f);
 
     Object {
         position: Vec2(a.position.0, a.position.1),
@@ -94,36 +94,33 @@ pub fn merge(a: &Object, b: &Object) -> Object {
         position: new_position,
         mass: merged_mass,
         velocity: new_velocity,
-        force: new_force
+        force: new_force,
     };
 
     result
 }
 
 pub fn collide_all(a: &Vec<Object>) -> Vec<Object> {
-          
     let mut merged: Vec<Object> = Vec::new();
     let mut merged_indices: Vec<usize> = Vec::new();
 
     for i in 0..a.len() {
-        
-        for j in i+1..a.len() {            
+        for j in i + 1..a.len() {
             if collide(&a[i], &a[j]) {
-                merged.push(merge(&a[i],&a[j]));
+                merged.push(merge(&a[i], &a[j]));
                 merged_indices.push(i);
                 merged_indices.push(j);
             }
-        }        
-    }  
+        }
+    }
 
     for i in 0..a.len() {
-        if !merged_indices.contains(&i) { 
+        if !merged_indices.contains(&i) {
             merged.push(a[i]);
         }
     }
-   
 
-   merged
+    merged
 }
 
 // TODO pipeline/composition

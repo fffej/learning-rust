@@ -5,16 +5,16 @@
 // - Replace vomit inducing pairs gubbins near the bottom
 // - Improve type safety of Vec2
 
-mod vec2;
 mod object;
+mod vec2;
 
+use rand::prelude::*;
 use std::env;
 use text_colorizer::*;
-use rand::prelude::*;
-use webp_animation::{Encoder};
+use webp_animation::Encoder;
 
-use vec2::*;
 use object::*;
+use vec2::*;
 
 const IMAGE_SIZE: u32 = 1024;
 const SUN: Object = Object {
@@ -45,14 +45,12 @@ fn main() {
     let mut ignored = 0;
 
     let dimensions = (IMAGE_SIZE, IMAGE_SIZE);
-    const BUFFER_SIZE : usize = (IMAGE_SIZE as usize) * (IMAGE_SIZE as usize);
+    const BUFFER_SIZE: usize = (IMAGE_SIZE as usize) * (IMAGE_SIZE as usize);
     let mut encoder = Encoder::new(dimensions).unwrap();
-    
 
-    let mut frame = [0,0,0,255].repeat(BUFFER_SIZE);
+    let mut frame = [0, 0, 0, 255].repeat(BUFFER_SIZE);
 
-    for i in 0..args.iterations {     
-
+    for i in 0..args.iterations {
         objects = update_all(&objects);
 
         for object in &objects {
@@ -61,7 +59,7 @@ fn main() {
             let y = object.position.1 as usize;
 
             // RGBA
-            let array_pos : usize = (4usize) * x + (y * (IMAGE_SIZE as usize) * 4usize);
+            let array_pos: usize = (4usize) * x + (y * (IMAGE_SIZE as usize) * 4usize);
 
             if array_pos <= frame.len() {
                 frame[array_pos] = 255; // ignore the other bits
@@ -75,7 +73,7 @@ fn main() {
 
     println!("ignored {}", ignored);
 
-    let webp_data = encoder.finalize(args.iterations+1).unwrap();
+    let webp_data = encoder.finalize(args.iterations + 1).unwrap();
     std::fs::write(args.output, webp_data).unwrap();
 }
 
@@ -132,8 +130,3 @@ fn parse_args() -> Arguments {
         output: args[2].clone(),
     }
 }
-
-
-
-
-
