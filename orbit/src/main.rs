@@ -7,46 +7,23 @@
 
 mod object;
 mod vec2;
+mod scene;
 
-use rand::prelude::*;
 use std::env;
 use text_colorizer::*;
 use webp_animation::Encoder;
 
 use object::*;
 use vec2::*;
+use scene::*;
 
 const IMAGE_SIZE: u32 = 1024;
-
-const SUN: Object = Object {
-    position: Vec2(IMAGE_SIZE as f64 / 2.0, IMAGE_SIZE as f64 / 2.0),
-    mass: 30.0,
-    velocity: VEC_ZERO,
-    force: VEC_ZERO,
-};
-
-fn create_scene(num_objects: i32) -> Vec<Object> {
-    let mut objects: Vec<Object> = Vec::new();
-    objects.push(SUN);
-
-    for _i in 0..num_objects {
-        let x: (f64, f64, f64, f64) = (
-            rand::thread_rng().gen::<f64>(), // mass
-            rand::thread_rng().gen::<f64>(), // velo
-            rand::thread_rng().gen::<f64>(), // pos x
-            rand::thread_rng().gen::<f64>(), // pos y
-        );
-        let obj = random_object(x);
-        objects.push(obj);
-    }
-
-    objects
-}
 
 fn main() {
     let args = parse_args();
 
-    let mut objects = create_scene(args.num_objects);
+    let scene = Scene(args.num_objects, IMAGE_SIZE);
+    let mut objects = scene.create();
 
     let dimensions = (IMAGE_SIZE, IMAGE_SIZE);
     const BUFFER_SIZE: usize = (IMAGE_SIZE as usize) * (IMAGE_SIZE as usize);
@@ -77,27 +54,6 @@ fn main() {
     std::fs::write(args.output, webp_data).unwrap();
 }
 
-fn random_velocity(r: f64, pos: &Vec2) -> Vec2 {
-    let sun_direction = unit(&sub(&pos, &SUN.position));
-    let direction = rotate90(&sun_direction);
-    scale(&direction, r * 0.3 + 0.3)
-}
-
-fn random_object((mass, vel, a, b): (f64, f64, f64, f64)) -> Object {
-    let p = random_position(a, b);
-    Object {
-        position: Vec2(p.0, p.1),
-        mass: mass * 0.2,
-        velocity: random_velocity(vel, &p),
-        force: VEC_ZERO,
-    }
-}
-
-fn random_position(x: f64, y: f64) -> Vec2 {
-    let r = x * 150.0 + 80.0;
-    let theta = y * 2.0 * std::f64::consts::PI;
-    add(&SUN.position, &Vec2(r * theta.cos(), r * theta.sin()))
-}
 
 #[derive(Debug)]
 struct Arguments {
