@@ -17,6 +17,7 @@ use object::*;
 use vec2::*;
 
 const IMAGE_SIZE: u32 = 1024;
+
 const SUN: Object = Object {
     position: Vec2(IMAGE_SIZE as f64 / 2.0, IMAGE_SIZE as f64 / 2.0),
     mass: 30.0,
@@ -24,12 +25,11 @@ const SUN: Object = Object {
     force: VEC_ZERO,
 };
 
-fn main() {
-    let args = parse_args();
+fn create_scene(num_objects: i32) -> Vec<Object> {
     let mut objects: Vec<Object> = Vec::new();
     objects.push(SUN);
 
-    for _i in 0..args.num_objects {
+    for _i in 0..num_objects {
         let x: (f64, f64, f64, f64) = (
             rand::thread_rng().gen::<f64>(), // mass
             rand::thread_rng().gen::<f64>(), // velo
@@ -40,9 +40,13 @@ fn main() {
         objects.push(obj);
     }
 
-    println!("Objects{:?}", objects);
+    objects
+}
 
-    let mut ignored = 0;
+fn main() {
+    let args = parse_args();
+
+    let mut objects = create_scene(args.num_objects);
 
     let dimensions = (IMAGE_SIZE, IMAGE_SIZE);
     const BUFFER_SIZE: usize = (IMAGE_SIZE as usize) * (IMAGE_SIZE as usize);
@@ -63,15 +67,11 @@ fn main() {
 
             if array_pos <= frame.len() {
                 frame[array_pos] = 255; // ignore the other bits
-            } else {
-                ignored = ignored + 1;
             }
         }
 
         encoder.add_frame(&frame, i).unwrap();
     }
-
-    println!("ignored {}", ignored);
 
     let webp_data = encoder.finalize(args.iterations + 1).unwrap();
     std::fs::write(args.output, webp_data).unwrap();
