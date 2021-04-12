@@ -23,7 +23,7 @@ pub fn force_between(a: &Object, b: &Object) -> Vec2 {
     scale(&uv, g)
 }
 
-pub fn accumulate_forces(a: &Object, b: &Vec<Object>) -> Object {
+pub fn accumulate_forces(a: &Object, b: &[Object]) -> Object {
     let f = b
         .iter()
         .fold(VEC_ZERO, |acc, x| add(&acc, &force_between(x, a)));
@@ -54,7 +54,7 @@ pub fn accelerate(o: &Object) -> Object {
 }
 
 pub fn accelerate_all(objs: &Vec<Object>) -> Vec<Object> {
-    objs.into_iter().map(accelerate).collect()
+    objs.iter().map(accelerate).collect()
 }
 
 pub fn reposition(a: &Object) -> Object {
@@ -90,14 +90,12 @@ pub fn merge(a: &Object, b: &Object) -> Object {
     let new_velocity = scale(&add(&mv1, &mv2), 1.0 / merged_mass);
     let new_force = add(&a.force, &b.force);
 
-    let result = Object {
+    Object {
         position: new_position,
         mass: merged_mass,
         velocity: new_velocity,
         force: new_force,
-    };
-
-    result
+    }
 }
 
 pub fn collide_all(a: &Vec<Object>) -> Vec<Object> {
