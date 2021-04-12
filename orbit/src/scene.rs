@@ -44,8 +44,7 @@ impl Scene {
     }
 
     pub fn create(&self) -> Vec<Object> {
-        let mut objects: Vec<Object> = Vec::new();
-        objects.push(self.sun());
+        let mut objects: Vec<Object> = vec![self.sun()];
 
         for _i in 0..self.num_objects {
             let x: (f64, f64, f64, f64) = (

@@ -38,7 +38,7 @@ pub fn accumulate_forces(a: &Object, b: &[Object]) -> Object {
     }
 }
 
-pub fn calculate_forces_on_all(a: &Vec<Object>) -> Vec<Object> {
+pub fn calculate_forces_on_all(a: &[Object]) -> Vec<Object> {
     a.iter().map(|o| accumulate_forces(o, a)).collect()
 }
 
@@ -53,7 +53,7 @@ pub fn accelerate(o: &Object) -> Object {
     }
 }
 
-pub fn accelerate_all(objs: &Vec<Object>) -> Vec<Object> {
+pub fn accelerate_all(objs: &[Object]) -> Vec<Object> {
     objs.iter().map(accelerate).collect()
 }
 
@@ -66,7 +66,7 @@ pub fn reposition(a: &Object) -> Object {
     }
 }
 
-pub fn reposition_all(a: &Vec<Object>) -> Vec<Object> {
+pub fn reposition_all(a: &[Object]) -> Vec<Object> {
     a.iter().map(reposition).collect()
 }
 
@@ -98,7 +98,7 @@ pub fn merge(a: &Object, b: &Object) -> Object {
     }
 }
 
-pub fn collide_all(a: &Vec<Object>) -> Vec<Object> {
+pub fn collide_all(a: &[Object]) -> Vec<Object> {
     let mut merged: Vec<Object> = Vec::new();
     let mut merged_indices: Vec<usize> = Vec::new();
 
@@ -123,7 +123,7 @@ pub fn collide_all(a: &Vec<Object>) -> Vec<Object> {
 
 // Don't go down the pipeline route.
 // https://github.com/rust-lang/rfcs/issues/2049
-pub fn update_all(a: &Vec<Object>) -> Vec<Object> {
+pub fn update_all(a: &[Object]) -> Vec<Object> {
     reposition_all(&accelerate_all(&calculate_forces_on_all(&collide_all(&a))))
 }
 
