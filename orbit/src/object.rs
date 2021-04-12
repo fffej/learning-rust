@@ -123,13 +123,10 @@ pub fn collide_all(a: &Vec<Object>) -> Vec<Object> {
     merged
 }
 
-// TODO pipeline/composition
+// Don't go down the pipeline route.
+// https://github.com/rust-lang/rfcs/issues/2049
 pub fn update_all(a: &Vec<Object>) -> Vec<Object> {
-    let x = collide_all(&a);
-    let y = calculate_forces_on_all(&x);
-    let z = accelerate_all(&y);
-
-    reposition_all(&z)
+    reposition_all(&accelerate_all(&calculate_forces_on_all(&collide_all(&a))))
 }
 
 #[test]
