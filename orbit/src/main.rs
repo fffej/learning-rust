@@ -36,17 +36,8 @@ fn main() {
     for i in 0..args.iterations {
         objects = update_all(&objects);
 
-        for object in &objects {
-            // work out x/y co-ordinates
-            let x = object.position.0 as usize;
-            let y = object.position.1 as usize;
-
-            // RGBA
-            let array_pos: usize = (4usize) * x + (y * (IMAGE_SIZE as usize) * 4usize);
-
-            if array_pos <= frame.len() {
-                frame[array_pos] = 255; // ignore the other bits
-            }
+        for &object in &objects {
+            render(&object, &mut frame);
         }
 
         encoder.add_frame(&frame, i).unwrap();
@@ -61,6 +52,41 @@ struct Arguments {
     num_objects: i32,
     iterations: i32,
     output: String,
+}
+
+fn offset(x: usize, y: usize) -> usize {
+    (4usize) * x + (y * (IMAGE_SIZE as usize) * 4usize)
+}
+
+fn set_pixel(frame: &mut [u8], x: usize, y: usize, r: u8, g: u8, b: u8, a: u8) {
+    let array_pos = offset(x,y);
+
+    if array_pos + 3 <= frame.len() {
+        frame[array_pos]     = r;
+        frame[array_pos + 1] = g;
+        frame[array_pos + 2] = b;
+        frame[array_pos + 3] = a;
+    }
+}
+
+fn render(obj: &Object, frame: &mut [u8]) {
+
+    // I've arranged things to avoid negative numbers (yet, that's awful)
+    let x = obj.position.0 as usize;
+    let y = obj.position.1 as usize;
+
+    let weight = obj.mass;
+    
+    set_pixel(frame, x, y, 255, 255, 255, 255);
+
+    let radius = (weight / 2.0) as usize;
+    let w = weight as usize;
+
+    for i in x-radius..x+radius {
+        for j in y-radius..y+radius {
+            set_pixel(frame, i,j , 255,255,255,255);
+        }
+    }
 }
 
 fn print_usage() {
