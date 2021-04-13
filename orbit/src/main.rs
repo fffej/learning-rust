@@ -59,10 +59,10 @@ fn offset(x: usize, y: usize) -> usize {
 }
 
 fn set_pixel(frame: &mut [u8], x: usize, y: usize, r: u8, g: u8, b: u8, a: u8) {
-    let array_pos = offset(x,y);
+    let array_pos = offset(x, y);
 
     if array_pos + 3 <= frame.len() {
-        frame[array_pos]     = r;
+        frame[array_pos] = r;
         frame[array_pos + 1] = g;
         frame[array_pos + 2] = b;
         frame[array_pos + 3] = a;
@@ -70,21 +70,20 @@ fn set_pixel(frame: &mut [u8], x: usize, y: usize, r: u8, g: u8, b: u8, a: u8) {
 }
 
 fn render(obj: &Object, frame: &mut [u8]) {
-
     // I've arranged things to avoid negative numbers (yet, that's awful)
     let x = obj.position.0 as usize;
     let y = obj.position.1 as usize;
 
     let weight = obj.mass;
-    
+
     set_pixel(frame, x, y, 255, 255, 255, 255);
 
     let radius = (weight / 2.0) as usize;
     let w = weight as usize;
 
-    for i in x-radius..x+radius {
-        for j in y-radius..y+radius {
-            set_pixel(frame, i,j , 255,255,255,255);
+    for i in x - radius..x + radius {
+        for j in y - radius..y + radius {
+            set_pixel(frame, i, j, 255, 255, 255, 255);
         }
     }
 }
