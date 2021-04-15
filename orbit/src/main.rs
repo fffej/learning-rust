@@ -68,22 +68,55 @@ fn set_pixel(frame: &mut [u8], x: usize, y: usize, r: u8, g: u8, b: u8, a: u8) {
     }
 }
 
+fn draw_circle(frame: &mut [u8], xc: usize, yc: usize, radius: i32, r: u8, g: u8, b: u8, a: u8) {
+    let mut x : i32 = 0;
+    let mut y : i32 = radius;
+    let mut d : i32 = 3 - 2 * radius;
+    draw_circle_int(frame, xc, yc, x, y, r, g, b, a);
+
+    while y >= x {
+        x = x + 1;
+        if d <= 0 {
+            d = d + (4 * x) + 6;
+        } else {
+            y = y - 1;           
+            d = d + 4 * (x - y) + 10;            
+        }
+        draw_circle_int(frame, xc, yc, x, y, r, g, b, a);
+    }
+}
+
+// usize, but needing negatives results in daftness. Sorry everyone.
+fn draw_circle_int(frame: &mut [u8], xc: usize, yc: usize, x : i32, y: i32, r: u8, g: u8, b: u8, a: u8) {
+    
+    let xpos = (xc as i32 + x) as usize;
+    let ypos = (yc as i32 + y) as usize;
+    let xneg = (xc as i32 - x) as usize;
+    let yneg = (yc as i32 - y) as usize;
+
+    set_pixel(frame, xpos, ypos, r, g, b, a);
+    set_pixel(frame, xneg, ypos, r, g, b, a);
+    set_pixel(frame, xpos, yneg, r, g, b, a);
+    set_pixel(frame, xneg, yneg, r, g, b, a);
+
+    let xpos_ = (xc as i32 + y) as usize;
+    let ypos_ = (yc as i32 + x) as usize;
+    let xneg_ = (xc as i32 - y) as usize;
+    let yneg_ = (yc as i32 - x) as usize;    
+
+    set_pixel(frame, xpos_, ypos_, r, g, b, a);
+    set_pixel(frame, xneg_, ypos_, r, g, b, a);
+    set_pixel(frame, xpos_, yneg_, r, g, b, a);
+    set_pixel(frame, xneg_, yneg_, r, g, b, a);
+}
+
 fn render(obj: &Object, frame: &mut [u8]) {
     // I've arranged things to avoid negative numbers (yet, that's awful)
     let x = obj.position.0 as usize;
     let y = obj.position.1 as usize;
 
-    let weight = obj.mass;
-
-    set_pixel(frame, x, y, 255, 255, 255, 255);
-
-    let radius = (weight / 2.0) as usize;
-
-    for i in x - radius..x + radius {
-        for j in y - radius..y + radius {
-            set_pixel(frame, i, j, 255, 255, 255, 255);
-        }
-    }
+    let weight = obj.mass;   
+    draw_circle(frame, x, y, (weight / 2.0) as i32, 255,255,255,255);
 }
 
 fn print_usage() {
