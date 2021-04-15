@@ -29,11 +29,10 @@ fn main() {
 
     let dimensions = (IMAGE_SIZE, IMAGE_SIZE);
     const BUFFER_SIZE: usize = (IMAGE_SIZE as usize) * (IMAGE_SIZE as usize);
-    let mut encoder = Encoder::new(dimensions).unwrap();
-
-    let mut frame = [0, 0, 0, 255].repeat(BUFFER_SIZE);
+    let mut encoder = Encoder::new(dimensions).unwrap();  
 
     for i in 0..args.iterations {
+        let mut frame = [0, 0, 0, 255].repeat(BUFFER_SIZE);
         objects = update_all(&objects);
 
         for &object in &objects {
@@ -79,7 +78,6 @@ fn render(obj: &Object, frame: &mut [u8]) {
     set_pixel(frame, x, y, 255, 255, 255, 255);
 
     let radius = (weight / 2.0) as usize;
-    let w = weight as usize;
 
     for i in x - radius..x + radius {
         for j in y - radius..y + radius {
