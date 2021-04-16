@@ -77,11 +77,11 @@ fn draw_circle(frame: &mut [u8], xc: usize, yc: usize, radius: i32, pixel: &RGBA
     draw_circle_int(frame, xc, yc, x, y, pixel);
 
     while y >= x {
-        x = x + 1;
+        x += 1;
         if d <= 0 {
             d = d + (4 * x) + 6;
         } else {
-            y = y - 1;           
+            y -= 1;           
             d = d + 4 * (x - y) + 10;            
         }
         draw_circle_int(frame, xc, yc, x, y, pixel);
