@@ -29,17 +29,20 @@ fn main() {
 
     let dimensions = (IMAGE_SIZE, IMAGE_SIZE);
     const BUFFER_SIZE: usize = (IMAGE_SIZE as usize) * (IMAGE_SIZE as usize);
-    let mut encoder = Encoder::new(dimensions).unwrap();  
+    let mut encoder = Encoder::new(dimensions).unwrap();
 
     for i in 0..args.iterations {
-        let mut frame = [0, 0, 0, 255].repeat(BUFFER_SIZE);
+        let mut frame = Frame {
+            values: [0, 0, 0, 255].repeat(BUFFER_SIZE),
+        };
+
         objects = update_all(&objects);
 
         for &object in &objects {
-            render(&object, &mut frame);
+            frame.render(&object);
         }
 
-        encoder.add_frame(&frame, i).unwrap();
+        encoder.add_frame(&frame.values(), i).unwrap();
     }
 
     let webp_data = encoder.finalize(args.iterations + 1).unwrap();
@@ -53,72 +56,80 @@ struct Arguments {
     output: String,
 }
 
-fn offset(x: usize, y: usize) -> usize {
-    (4usize) * x + (y * (IMAGE_SIZE as usize) * 4usize)
+struct RGBA(u8, u8, u8, u8);
+
+struct Frame {
+    values: Vec<u8>,
 }
 
-fn set_pixel(frame: &mut [u8], x: usize, y: usize, pixel: &RGBA) {
-    let array_pos = offset(x, y);
+impl Frame {
+    pub fn render(&mut self, obj: &Object) {
+        let x = obj.position.0 as usize;
+        let y = obj.position.1 as usize;
 
-    if array_pos + 3 <= frame.len() {
-        frame[array_pos] = pixel.0;
-        frame[array_pos + 1] = pixel.1;
-        frame[array_pos + 2] = pixel.2;
-        frame[array_pos + 3] = pixel.3;
+        let weight = obj.mass;
+        self.draw_circle(x, y, (weight / 2.0) as i32, &RGBA(255, 255, 255, 255));
     }
-}
 
-struct RGBA(u8,u8,u8,u8);
+    pub fn values(&self) -> &Vec<u8> {
+        &self.values
+    }
 
-fn draw_circle(frame: &mut [u8], xc: usize, yc: usize, radius: i32, pixel: &RGBA) {
-    let mut x : i32 = 0;
-    let mut y : i32 = radius;
-    let mut d : i32 = 3 - 2 * radius;
-    draw_circle_int(frame, xc, yc, x, y, pixel);
+    fn draw_circle(&mut self, xc: usize, yc: usize, radius: i32, pixel: &RGBA) {
+        let mut x: i32 = 0;
+        let mut y: i32 = radius;
+        let mut d: i32 = 3 - 2 * radius;
+        self.draw_circle_int(xc, yc, x, y, pixel);
 
-    while y >= x {
-        x += 1;
-        if d <= 0 {
-            d = d + (4 * x) + 6;
-        } else {
-            y -= 1;           
-            d = d + 4 * (x - y) + 10;            
+        while y >= x {
+            x += 1;
+            if d <= 0 {
+                d = d + (4 * x) + 6;
+            } else {
+                y -= 1;
+                d = d + 4 * (x - y) + 10;
+            }
+            self.draw_circle_int(xc, yc, x, y, pixel);
         }
-        draw_circle_int(frame, xc, yc, x, y, pixel);
     }
-}
 
-// usize, but needing negatives results in daftness. Sorry everyone.
-fn draw_circle_int(frame: &mut [u8], xc: usize, yc: usize, x : i32, y: i32, pixel: &RGBA) {
-    
-    let xpos = (xc as i32 + x) as usize;
-    let ypos = (yc as i32 + y) as usize;
-    let xneg = (xc as i32 - x) as usize;
-    let yneg = (yc as i32 - y) as usize;
+    // usize, but needing negatives results in daftness. Sorry everyone.
+    fn draw_circle_int(&mut self, xc: usize, yc: usize, x: i32, y: i32, pixel: &RGBA) {
+        let xpos = (xc as i32 + x) as usize;
+        let ypos = (yc as i32 + y) as usize;
+        let xneg = (xc as i32 - x) as usize;
+        let yneg = (yc as i32 - y) as usize;
 
-    set_pixel(frame, xpos, ypos, pixel);
-    set_pixel(frame, xneg, ypos, pixel);
-    set_pixel(frame, xpos, yneg, pixel);
-    set_pixel(frame, xneg, yneg, pixel);
+        self.set_pixel(xpos, ypos, pixel);
+        self.set_pixel(xneg, ypos, pixel);
+        self.set_pixel(xpos, yneg, pixel);
+        self.set_pixel(xneg, yneg, pixel);
 
-    let xpos_ = (xc as i32 + y) as usize;
-    let ypos_ = (yc as i32 + x) as usize;
-    let xneg_ = (xc as i32 - y) as usize;
-    let yneg_ = (yc as i32 - x) as usize;    
+        let xpos_ = (xc as i32 + y) as usize;
+        let ypos_ = (yc as i32 + x) as usize;
+        let xneg_ = (xc as i32 - y) as usize;
+        let yneg_ = (yc as i32 - x) as usize;
 
-    set_pixel(frame, xpos_, ypos_, pixel);
-    set_pixel(frame, xneg_, ypos_, pixel);
-    set_pixel(frame, xpos_, yneg_, pixel);
-    set_pixel(frame, xneg_, yneg_, pixel);
-}
+        self.set_pixel(xpos_, ypos_, pixel);
+        self.set_pixel(xneg_, ypos_, pixel);
+        self.set_pixel(xpos_, yneg_, pixel);
+        self.set_pixel(xneg_, yneg_, pixel);
+    }
 
-fn render(obj: &Object, frame: &mut [u8]) {
-    // I've arranged things to avoid negative numbers (yet, that's awful)
-    let x = obj.position.0 as usize;
-    let y = obj.position.1 as usize;
+    fn offset(&self, x: usize, y: usize) -> usize {
+        (4usize) * x + (y * (IMAGE_SIZE as usize) * 4usize)
+    }
 
-    let weight = obj.mass;   
-    draw_circle(frame, x, y, (weight / 2.0) as i32, &RGBA(255,255,255,255));
+    fn set_pixel(&mut self, x: usize, y: usize, pixel: &RGBA) {
+        let array_pos = self.offset(x, y);
+
+        if array_pos + 3 <= self.values.len() {
+            self.values[array_pos] = pixel.0;
+            self.values[array_pos + 1] = pixel.1;
+            self.values[array_pos + 2] = pixel.2;
+            self.values[array_pos + 3] = pixel.3;
+        }
+    }
 }
 
 fn print_usage() {
